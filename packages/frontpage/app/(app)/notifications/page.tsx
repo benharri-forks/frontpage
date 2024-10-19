@@ -26,7 +26,8 @@ export default async function NotificationsPage() {
         action={async () => {
           "use server";
           await markAllNotificationsRead();
-          revalidatePath("/notifications");
+          // Revalidating the layout to refresh the notification count
+          revalidatePath("/notifications", "layout");
         }}
       >
         <Button variant="outline" size="sm">
