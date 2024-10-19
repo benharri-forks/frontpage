@@ -224,6 +224,5 @@ export const Notification = sqliteTable("notifications", {
     .default(sql`(current_timestamp)`),
   readAt: dateIsoText("read_at"),
   reason: text("reason", { enum: ["postComment", "commentReply"] }).notNull(),
-  postId: integer("post_id").references(() => Post.id),
   commentId: integer("comment_id").references(() => Comment.id),
 });

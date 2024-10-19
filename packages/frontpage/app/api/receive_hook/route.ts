@@ -114,7 +114,6 @@ export async function POST(request: Request) {
             await unauthed_createNotification(tx, {
               did: userToNotify,
               reason: parentComment ? "commentReply" : "postComment",
-              postId: post.id,
               commentId: newComment.id,
             });
           }

@@ -11,7 +11,6 @@ import {
   isNull,
   count,
   ExtractTablesWithRelations,
-  or,
 } from "drizzle-orm";
 import { invariant } from "@/lib/utils";
 import { ensureUser } from "../user";
@@ -54,13 +53,7 @@ export const getNotifications = cache(
         schema.Comment,
         eq(schema.Comment.id, schema.Notification.commentId),
       )
-      .leftJoin(
-        schema.Post,
-        or(
-          eq(schema.Post.id, schema.Notification.postId),
-          eq(schema.Post.id, schema.Comment.postId),
-        ),
-      )
+      .leftJoin(schema.Post, eq(schema.Post.id, schema.Comment.postId))
       .groupBy(schema.Notification.id)
       .orderBy(desc(schema.Notification.createdAt))
       .limit(limit);
@@ -138,7 +131,6 @@ export async function markAllNotificationsRead() {
 type CreateNotificationInput = {
   did: DID;
   reason: "postComment" | "commentReply";
-  postId: number;
   commentId: number;
 };
 
@@ -149,12 +141,11 @@ export async function unauthed_createNotification(
     typeof schema,
     ExtractTablesWithRelations<typeof schema>
   >,
-  { did, reason, postId, commentId }: CreateNotificationInput,
+  { did, reason, commentId }: CreateNotificationInput,
 ) {
   await tx.insert(schema.Notification).values({
     did,
     reason,
-    postId,
     commentId,
   });
 }

@@ -61,7 +61,7 @@ async function getNotificationViewModel(notification: NotificationType) {
     return {
       type: "postComment",
       Icon: Link1Icon,
-      title: "New comment on your post",
+      title: `New comment on your post ${notification.post.title}`,
       body: notification.comment.body,
       time: notification.createdAt,
       read: notification.read,
