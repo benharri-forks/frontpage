@@ -55,7 +55,7 @@ export const getNotifications = cache(
       )
       .leftJoin(schema.Post, eq(schema.Post.id, schema.Comment.postId))
       .groupBy(schema.Notification.id)
-      .orderBy(desc(schema.Notification.createdAt))
+      .orderBy(desc(schema.Notification.id))
       .limit(limit);
 
     const newCursor =
