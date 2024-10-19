@@ -5,6 +5,7 @@ import {
   customType,
   unique,
   foreignKey,
+  index,
 } from "drizzle-orm/sqlite-core";
 import type { DID } from "./data/atproto/did";
 import {
@@ -216,13 +217,19 @@ export const Report = sqliteTable("reports", {
   }).default("pending"),
 });
 
-export const Notification = sqliteTable("notifications", {
-  id: integer("id").primaryKey(),
-  did: did("did").notNull(),
-  createdAt: dateIsoText("created_at")
-    .notNull()
-    .default(sql`(current_timestamp)`),
-  readAt: dateIsoText("read_at"),
-  reason: text("reason", { enum: ["postComment", "commentReply"] }).notNull(),
-  commentId: integer("comment_id").references(() => Comment.id),
-});
+export const Notification = sqliteTable(
+  "notifications",
+  {
+    id: integer("id").primaryKey(),
+    did: did("did").notNull(),
+    createdAt: dateIsoText("created_at")
+      .notNull()
+      .default(sql`(current_timestamp)`),
+    readAt: dateIsoText("read_at"),
+    reason: text("reason", { enum: ["postComment", "commentReply"] }).notNull(),
+    commentId: integer("comment_id").references(() => Comment.id),
+  },
+  (t) => ({
+    createdAtIdx: index("created_at_idx").on(t.createdAt),
+  }),
+);
