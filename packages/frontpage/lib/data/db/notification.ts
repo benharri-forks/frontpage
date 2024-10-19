@@ -11,6 +11,7 @@ import {
   isNull,
   count,
   ExtractTablesWithRelations,
+  or,
 } from "drizzle-orm";
 import { invariant } from "@/lib/utils";
 import { ensureUser } from "../user";
@@ -30,6 +31,10 @@ function createCursor(date: Date): Cursor {
   return date.toString() as unknown as Cursor;
 }
 
+export type Notification = Awaited<
+  ReturnType<typeof getNotifications>
+>["notifications"][number];
+
 export const getNotifications = cache(
   async (limit: number, cursor: Cursor | null) => {
     const user = await ensureUser();
@@ -45,10 +50,22 @@ export const getNotifications = cache(
             : undefined,
         ),
       )
-      .leftJoin(schema.Post, and(eq(schema.Post.id, schema.Notification.id)))
-      .leftJoin(schema.Comment, eq(schema.Comment.id, schema.Notification.id))
+      .leftJoin(
+        schema.Comment,
+        eq(schema.Comment.id, schema.Notification.commentId),
+      )
+      .leftJoin(
+        schema.Post,
+        or(
+          eq(schema.Post.id, schema.Notification.postId),
+          eq(schema.Post.id, schema.Comment.postId),
+        ),
+      )
+      .groupBy(schema.Notification.id)
       .orderBy(desc(schema.Notification.createdAt))
       .limit(limit);
+
+    console.log(joins);
 
     const newCursor =
       joins.length > 0
@@ -58,37 +75,18 @@ export const getNotifications = cache(
     return {
       cursor: newCursor,
       notifications: joins.map((notification) => {
-        const sharedAttributes = {
+        const post = notification.posts;
+        const comment = notification.comments;
+        invariant(post, "Post should exist if it's in the notification");
+        invariant(comment, "Comment should exist if it's in the notification");
+        return {
+          type: notification.notifications.reason,
           createdAt: notification.notifications.createdAt,
           read: !!notification.notifications.readAt,
           id: notification.notifications.id,
+          post,
+          comment,
         };
-
-        if (notification.notifications.reason === "postComment") {
-          const post = notification.posts;
-          invariant(post, "Post should exist if it's in the notification");
-          return {
-            type: "postComment" as const,
-            ...sharedAttributes,
-            post,
-          };
-        }
-
-        if (notification.notifications.reason === "commentReply") {
-          const comment = notification.comments;
-          invariant(
-            comment,
-            "Comment should exist if it's in the notification",
-          );
-          return {
-            type: "postComment" as const,
-            ...sharedAttributes,
-            comment,
-          };
-        }
-
-        const _exhaustiveCheck: never = notification.notifications.reason;
-        throw new Error("Unknown notification reason");
       }),
     };
   },
@@ -137,17 +135,12 @@ export async function markAllNotificationsRead() {
     );
 }
 
-type CreateNotificationInput =
-  | {
-      did: DID;
-      reason: "postComment";
-      postId: number;
-    }
-  | {
-      did: DID;
-      reason: "commentReply";
-      commentId: number;
-    };
+type CreateNotificationInput = {
+  did: DID;
+  reason: "postComment" | "commentReply";
+  postId: number;
+  commentId: number;
+};
 
 export async function unauthed_createNotification(
   tx: SQLiteTransaction<
@@ -156,18 +149,11 @@ export async function unauthed_createNotification(
     typeof schema,
     ExtractTablesWithRelations<typeof schema>
   >,
-  input: CreateNotificationInput,
+  { did, reason, postId, commentId }: CreateNotificationInput,
 ) {
-  let postId = null;
-  let commentId = null;
-  if (input.reason === "postComment") {
-    postId = input.postId;
-  } else if (input.reason === "commentReply") {
-    commentId = input.commentId;
-  }
   await tx.insert(schema.Notification).values({
-    did: input.did,
-    reason: input.reason,
+    did,
+    reason,
     postId,
     commentId,
   });

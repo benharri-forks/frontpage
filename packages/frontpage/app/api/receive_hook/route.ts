@@ -113,12 +113,9 @@ export async function POST(request: Request) {
           if (userToNotify !== repo) {
             await unauthed_createNotification(tx, {
               did: userToNotify,
-              ...(parentComment
-                ? { reason: "commentReply", commentId: parentComment.id }
-                : {
-                    reason: "postComment",
-                    postId: post.id,
-                  }),
+              reason: parentComment ? "commentReply" : "postComment",
+              postId: post.id,
+              commentId: newComment.id,
             });
           }
         } else if (op.action === "delete") {

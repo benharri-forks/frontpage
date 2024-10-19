@@ -18,3 +18,7 @@ export function invariant(
     throw new Error(message);
   }
 }
+
+export function exhaustiveCheck(value: never): never {
+  throw new Error(`Unhandled value: ${value}`);
+}
