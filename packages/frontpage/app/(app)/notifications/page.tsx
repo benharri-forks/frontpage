@@ -42,14 +42,12 @@ export default async function NotificationsPage() {
 }
 
 async function getNotificationViewModel(notification: NotificationType) {
+  const replierHandle = await getVerifiedHandle(notification.comment.authorDid);
   if (notification.type === "commentReply") {
-    const replierHandle = await getVerifiedHandle(
-      notification.comment.authorDid,
-    );
     return {
       type: "commentReply",
       Icon: ChatBubbleIcon,
-      title: `${replierHandle ?? "Someone"} replied to your comment on ${notification.post.title}`,
+      title: `@${replierHandle ?? "<invalid handle>"} replied to your comment on ${notification.post.title}`,
       body: notification.comment.body,
       time: notification.createdAt,
       read: notification.read,
@@ -61,7 +59,7 @@ async function getNotificationViewModel(notification: NotificationType) {
     return {
       type: "postComment",
       Icon: Link1Icon,
-      title: `New comment on your post ${notification.post.title}`,
+      title: `@${replierHandle ?? "<invalid handle>"} commented on your post: "${notification.post.title}"`,
       body: notification.comment.body,
       time: notification.createdAt,
       read: notification.read,
