@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import { NotificationCountKey } from "./notification-indicator-shared";
 
 async function fetchNotificationCount() {
   const response = await fetch("/api/notification-count");
@@ -15,7 +16,7 @@ async function fetchNotificationCount() {
 }
 
 export function NotificationIndicatorCount() {
-  const { data: count } = useSWR("notifications", fetchNotificationCount, {
+  const { data: count } = useSWR(NotificationCountKey, fetchNotificationCount, {
     suspense: true,
     revalidateOnMount: false,
   });

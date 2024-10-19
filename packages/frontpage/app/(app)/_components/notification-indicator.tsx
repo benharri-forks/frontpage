@@ -4,6 +4,7 @@ import { SWRConfig } from "swr";
 import { getUser } from "@/lib/data/user";
 import { getNotificationCount } from "@/lib/data/db/notification";
 import { ErrorBoundary } from "react-error-boundary";
+import { NotificationCountKey } from "./notification-indicator-shared";
 
 export async function NotificationIndicator({
   children,
@@ -29,7 +30,7 @@ function NotificationIndicatorInner() {
     <SWRConfig
       value={{
         fallback: {
-          notifications: getNotificationCount(),
+          [NotificationCountKey]: getNotificationCount(),
         },
       }}
     >
