@@ -58,8 +58,6 @@ export const getNotifications = cache(
       .orderBy(desc(schema.Notification.createdAt))
       .limit(limit);
 
-    console.log(joins);
-
     const newCursor =
       joins.length > 0
         ? createCursor(joins.at(-1)!.notifications.createdAt)
