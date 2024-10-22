@@ -54,9 +54,13 @@ async function getMoreNotifications(
   const notifications = await getNotifications(40, cursor);
 
   return {
-    content: notifications.notifications.map((notification) => (
-      <Notification key={notification.id} notification={notification} />
-    )),
+    content: (
+      <>
+        {notifications.notifications.map((notification) => (
+          <Notification key={notification.id} notification={notification} />
+        ))}
+      </>
+    ),
 
     nextCursor: notifications.cursor,
     pageSize: notifications.notifications.length,
