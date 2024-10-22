@@ -27,7 +27,7 @@ function cursorToDate(cursor: Cursor): Date {
 }
 
 function createCursor(date: Date): Cursor {
-  return date.toString() as unknown as Cursor;
+  return date.toISOString() as unknown as Cursor;
 }
 
 export type Notification = Awaited<
