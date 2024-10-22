@@ -2,11 +2,13 @@ import { TimeAgo } from "@/lib/components/time-ago";
 import { Button } from "@/lib/components/ui/button";
 import { getVerifiedHandle } from "@/lib/data/atproto/identity";
 import {
+  Cursor,
   getNotifications,
   markAllNotificationsRead,
   markNotificationRead,
   Notification as NotificationType,
 } from "@/lib/data/db/notification";
+import { InfiniteList, Page } from "@/lib/infinite-list";
 import { exhaustiveCheck } from "@/lib/utils";
 import {
   ChatBubbleIcon,
@@ -16,7 +18,6 @@ import {
 import { revalidatePath } from "next/cache";
 
 export default async function NotificationsPage() {
-  const notifications = await getNotifications(40, null);
   return (
     <>
       <h1 className="scroll-m-20 text-xl font-extrabold lg:text-2xl">
@@ -35,11 +36,31 @@ export default async function NotificationsPage() {
           Mark all as read
         </Button>
       </form>
-      {notifications.notifications.map((notification) => (
-        <Notification key={notification.id} notification={notification} />
-      ))}
+
+      <InfiniteList
+        cacheKey="notifications"
+        emptyMessage="There are no more notifications."
+        getMoreItemsAction={getMoreNotifications}
+        fallback={getMoreNotifications(null)}
+      />
     </>
   );
+}
+
+async function getMoreNotifications(
+  cursor: Cursor | null,
+): Promise<Page<Cursor>> {
+  "use server";
+  const notifications = await getNotifications(40, cursor);
+
+  return {
+    content: notifications.notifications.map((notification) => (
+      <Notification key={notification.id} notification={notification} />
+    )),
+
+    nextCursor: notifications.cursor,
+    pageSize: notifications.notifications.length,
+  };
 }
 
 async function getNotificationViewModel(notification: NotificationType) {
