@@ -20,6 +20,8 @@ const did = customType<{ data: DID }>({
   },
 });
 
+const nowAsIsoString = sql`(SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`;
+
 const dateIsoText = customType<{ data: Date; driverData: string }>({
   dataType() {
     return "text";
@@ -219,9 +221,7 @@ export const Report = sqliteTable("reports", {
 export const Notification = sqliteTable("notifications", {
   id: integer("id").primaryKey(),
   did: did("did").notNull(),
-  createdAt: dateIsoText("created_at")
-    .notNull()
-    .default(sql`(current_timestamp)`),
+  createdAt: dateIsoText("created_at").notNull().default(nowAsIsoString),
   readAt: dateIsoText("read_at"),
   reason: text("reason", { enum: ["postComment", "commentReply"] }).notNull(),
   commentId: integer("comment_id").references(() => Comment.id),
